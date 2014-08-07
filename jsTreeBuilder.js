@@ -1,6 +1,6 @@
 function QueryTreeBuilder(containerID, fieldsDict) {
     this.rootID = containerID;
-    $('#' + containerID).html('<ul class="tree"><li id="root" class="group droppable">Root&emsp;&emsp;<button class="add">Add Node</button><button class="addGroup">Add Group</button><ul></ul></li></ul>')
+    $('#' + containerID).html('<ul class="tree"><li id="root" class="group droppable">Root&emsp;&emsp;<button class="add">Add Node</button><button class="addGroup">Add Group</button><ul></ul></li></ul>');
     this.fields = fieldsDict;
     this.setButtonEvents();
 }
@@ -9,19 +9,20 @@ QueryTreeBuilder.prototype = {
     queryObj: {},
     fields: {},
     ops: {
-        text: ["equals", "begins with", "ends with", "contains"],
-        numeric: ["equals", "gt", "lt", "ge", "le"],
-        select: ["equals"],
+        text: {"equals":"==", "begins with":"%=", "ends with":"=%", "contains":"%=%"},
+        numeric: {"equals":"==", "gt":">", "lt":"<", "ge":">=", "le":"<="},
+        select: {"equals":"=="}
     },
     buttonString: '<button class="add">Add Node</button><button class="addGroup">Add Group</button><button class="remove">Remove Node</button>',
     andOrDropdownString: '<li class="AndOr"><select><option>AND</option><option>OR</option></select></li>',
-    negatedCheckboxString:'Negated? <span class="negated"><input type="checkbox" class="neg"></span>',
+    negatedCheckboxString: 'Negated? <span class="negation"><input type="checkbox" class="neg"></span>',
     objOnDrag: null,
     opsDropdown: {},
     buildOpsDropdown: function(type) {
         this.opsDropdown[type] = '<select class="opsDropdown">';
-        for (var i = 0; i < this.ops[type].length; i++) {
-            this.opsDropdown[type] += "<option>" + this.ops[type][i] + "</option>";
+        var operators=Object.keys(this.ops[type]);
+        for (var i = 0; i < operators.length; i++) {
+            this.opsDropdown[type] += "<option>" + operators[i] + "</option>";
         }
         this.opsDropdown[type] += "</select>";
     },
@@ -62,9 +63,9 @@ QueryTreeBuilder.prototype = {
             }
         });
     },
-    buildCriteriaRow: function(parentObj, childIndex) {
+    buildCriteriaRow: function(parentObj, childIndex,rowData) {
         var inserted = $('<li class="criteria draggable droppable" draggable="true">Criteria&emsp;&emsp;</li>');
-        inserted.append(this.negatedCheckboxString+'&emsp;');
+        inserted.append(this.negatedCheckboxString + '&emsp;');
         if (childIndex === undefined) {
             parentObj.append(inserted);
         } else {
@@ -79,15 +80,26 @@ QueryTreeBuilder.prototype = {
         inserted.children('select.FieldDropdown').change();
         this.setButtonEvents();
         this.setDragDropEvents();
+        if (rowData!= undefined){
+            inserted.children('select.FieldDropdown').val(rowData.fieldName);
+            inserted.children('select.FieldDropdown').change();
+            inserted.children('span.opsField').children('select.opsDropdown').val(rowData.op);
+            inserted.children('span.valueField').children('.value').val(rowData.value);
+            if (rowData.negated){
+                inserted.children('span.negation').children('input.neg').prop('checked',true);
+            }
+            if (rowData.connector !=null){
+                inserted.prev("li.AndOr").children('select').val(rowData.connector);
+            }
+        }
     },
     buildAndOrRow: function(criteriaRowObj) {
         criteriaRowObj.before(this.andOrDropdownString);
     },
-    buildGroupRow: function(parentObj, childIndex) {
-        var inserted = $('<li class="group draggable droppable" draggable="true">Criteria Group&emsp;&emsp;' + this.negatedCheckboxString+'&emsp;'+this.buttonString + "<ul></ul></li>");
+    buildGroupRow: function(parentObj, childIndex,rowData) {
+        var inserted = $('<li class="group draggable droppable" draggable="true">Criteria Group&emsp;&emsp;' + this.negatedCheckboxString + '&emsp;' + this.buttonString + "<ul></ul></li>");
         if (childIndex === undefined) {
             parentObj.append(inserted);
-
         } else {
             $(parentObj.children('li.criteria')[childIndex]).after(inserted);
         }
@@ -96,6 +108,14 @@ QueryTreeBuilder.prototype = {
         }
         this.setButtonEvents();
         this.setDragDropEvents();
+        if (rowData!= undefined){
+            if (rowData.negated){
+                inserted.children('span.negation').children('input.neg').prop('checked',true);
+            }
+            if (rowData.connector !=null){
+                inserted.prev("li.AndOr").children('select').val(rowData.connector);
+            }
+        }
     },
     setButtonEvents: function() {
         var self = this;
@@ -125,37 +145,83 @@ QueryTreeBuilder.prototype = {
 
     },
     buildQueryObjectFromDOM: function() {
-        this.queryObj=new CriteriaGroupObject();
+        this.queryObj = new this.CriteriaGroupObject();
         this.buildQueryObjectFromDOMNode($('#root'), this.queryObj);
         return this.queryObj;
     },
     buildQueryObjectFromDOMNode: function(DOMNode, objectNode) {
-        //console.log(objectNode);
         if (DOMNode.hasClass('criteria')) {
-            var fieldName=DOMNode.children('select.FieldDropdown').val();
-            var op=DOMNode.children('span.opsField').children('select.opsDropdown').val();
-            var value=DOMNode.children('span.valueField').children('.value').val();
-            var connector=DOMNode.prev('li.AndOr').children('select').val();
-            var co=new CriteriaObject(fieldName, op, value,connector);
-            if (DOMNode.children('input.neg').is(':checked')){
-                co.negated=true;
+            var fieldName = DOMNode.children('select.FieldDropdown').val();
+            var op = DOMNode.children('span.opsField').children('select.opsDropdown').val();
+            var value = DOMNode.children('span.valueField').children('.value').val();
+            var connector = DOMNode.prev('li.AndOr').children('select').val();
+            var co = new this.CriteriaObject(fieldName, op, value, connector);
+            if (DOMNode.children('span.negation').children('input.neg').is(':checked')) {
+                co.negated = true;
             }
             objectNode.nestedElem.push(co);
         } else if (DOMNode.hasClass('group')) {
-            var cgo=new CriteriaGroupObject();
-            var childrenCriteria=DOMNode.children('ul').children('li.criteria,li.group');
-            for (var i=0;i<childrenCriteria.length;i++){
-                this.buildQueryObjectFromDOMNode($(childrenCriteria[i]),cgo);
+            var cgo = new this.CriteriaGroupObject();
+            var childrenCriteria = DOMNode.children('ul').children('li.criteria,li.group');
+            for (var i = 0; i < childrenCriteria.length; i++) {
+                this.buildQueryObjectFromDOMNode($(childrenCriteria[i]), cgo);
             }
-            if (DOMNode.children('input.neg').is(':checked')){
-                cgo.negated=true;
+            if (DOMNode.children('span.negation').children('input.neg').is(':checked')) {
+                cgo.negated = true;
             }
-            cgo.connector=DOMNode.prev('li.AndOr').children('select').val();
+            cgo.connector = DOMNode.prev('li.AndOr').children('select').val();
             objectNode.nestedElem.push(cgo);
         }
     },
     buildIfStatementFromDOM: function() {
         this.buildQueryObjectFromDOM();
+        var s="";
+        s=this.buildIfStatementFromQueryObjNode(this.queryObj,s);
+        return s;
+    },
+    buildIfStatementFromQueryObjNode:function(node,s){
+        //console.log(s)
+        var s1="";
+        if (node.type==="criteria"){
+            var type=this.fields[node.fieldName].type;
+            s1='('+node.fieldName+' '+this.ops[type][node.op]+' ';
+            if (type==='numeric'){
+                s1+=node.value;
+            } else if (type==='text' || type==='select'){
+                s1+='"'+node.value+'"';
+            }
+            s1+=')';
+        } else if (node.type==="group"){
+            /* //Ignore empty crit groups; doesn't work if the group is the first child
+            if (node.nestedElem.length==0){
+                return '';
+            }*/
+            var s2='';
+            for (var i=0;i<node.nestedElem.length;i++){
+                s2+=this.buildIfStatementFromQueryObjNode(node.nestedElem[i],'');
+            }
+            s1='('+s2+') ';
+        }
+        if (node.negated){
+            s1='(!'+s1+')';
+        }
+        if (node.connector!=null){
+            s1=' '+node.connector+' '+s1;
+        }
+        s+=s1;
+        return s;
+    },
+    buildQueryTreeFromQueryObj:function(str){
+        var queryObj=JSON.parse(str);
+        this.resetTree();
+        this.buildQueryTreeFromQueryObjNode(queryObj,$('#root'));
+    },
+    buildQueryTreeFromQueryObjNode:function(objectNode,DOMNode){
+        if (objectNode.type==="criteria"){
+            this.buildCriteriaRow(DOMNode,undefined,objectNode);
+        } else if (objectNode.type==="group"){
+            this.buildGroupRow(DOMNode,undefined,objectNode);
+        }
     },
     setDragDropEvents: function() {
         var self = this;
@@ -214,19 +280,25 @@ QueryTreeBuilder.prototype = {
             event.preventDefault();
             $(event.target).removeClass('highlighted');
         });
+    },
+    CriteriaObject: function(fieldName, op, value, connector) {
+        this.type='criteria';
+        this.negated = false;
+        this.fieldName = fieldName;
+        this.op = op;
+        this.value = value;
+        this.connector = connector; //AndOr values from the li.AndOr before it
+    },
+    CriteriaGroupObject: function() {
+        this.type='group';
+        this.nestedElem = [];
+        this.connector = null;
+        this.negated = false;
+    },
+    resetTree:function(){
+        $('#root').children('ul').empty();
     }
 };
 
-function CriteriaObject(fieldName, op, value,connector) {
-    this.negated = false;
-    this.fieldName = fieldName;
-    this.op = op;
-    this.value = value;
-    this.connector=connector; //AndOr values from the li.AndOr before it
-}
-function CriteriaGroupObject() {
-    this.nestedElem = []; 
-    this.connector=null;
-    this.negated = false;
-}
+
 

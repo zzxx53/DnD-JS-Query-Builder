@@ -12,18 +12,30 @@
                     sex: {type: "select", values: ["male", "female"]}, };
                 qtb = new QueryTreeBuilder("tree", fieldsDict);
                 $('#getOutput').click(function(){
-                    $('#output').val(JSON.stringify(qtb.buildQueryObjectFromDOM()));
-                })
+                    var stmt=qtb.buildIfStatementFromDOM();
+                    console.log(stmt)
+                    $('#queryOutput').val(JSON.stringify(qtb.queryObj));
+                    $('#stmtOutput').val(stmt);
+                });
+                $('#rebuild').click(function(){
+                    qtb.buildQueryTreeFromQueryObj($('#queryOutput').val());
+                });
+                $('#reset').click(function(){
+                    qtb.resetTree();
+                });
             })
         </script>
 
     </head>
     <body>
+        <button id="reset">Reset Tree</button>
         <br><br>
         <div id="tree">
 
         </div><br><br>
-        <textarea id="output" rows="20" cols="50"></textarea>
-        <button id="getOutput">Write Object</button>
+        <textarea id="queryOutput" rows="20" cols="50"></textarea>&emsp;
+        <textarea id="stmtOutput" rows="20" cols="50"></textarea><br>
+        <button id="getOutput">Write Output</button>
+        <button id="rebuild">Rebuild Query Tree</button>
 
     </body>
