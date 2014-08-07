@@ -11,7 +11,9 @@
                     age: {type: "numeric"},
                     sex: {type: "select", values: ["male", "female"]}, };
                 qtb = new QueryTreeBuilder("tree", fieldsDict);
-
+                $('#getOutput').click(function(){
+                    $('#output').val(JSON.stringify(qtb.buildQueryObjectFromDOM()));
+                })
             })
         </script>
 
@@ -21,6 +23,7 @@
         <div id="tree">
 
         </div><br><br>
-        <textarea id="output"></textarea>
+        <textarea id="output" rows="20" cols="50"></textarea>
+        <button id="getOutput">Write Object</button>
 
     </body>
