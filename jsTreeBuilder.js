@@ -151,7 +151,7 @@ QueryTreeBuilder.prototype = {
                 self.buildGroupRow($(this).siblings('ul'));
             }
         });
-        $(".remove").off('click').click(function() {
+        $(".dndjqb_remove").off('click').click(function() {
             var thisLI = $(this).closest("li");
             thisLI.prev("li.dndjqb_AndOr").remove();
             thisLI.remove();

@@ -7,7 +7,7 @@ but none of them supports dragging conditions around to alter the tree structure
 to the new [HTML5 Drag-and-Drop API] (https://developer.mozilla.org/en-US/docs/Web/Guide/HTML/Drag_and_drop), 
 this task has become much easier. 
 
-Preliminarily tested in Firefox and Chrome; comments are welcome. 
+Requires jQuery; comments are welcome. 
 
 ##Configuration & Usage
 
@@ -18,7 +18,9 @@ The container may either be the id of a `DIV` element, or a jQuery object referr
 
 The data column dictionary defines the data columns one would like to use in the boolean expressions. 
 The data columns are typed; the program currently supports text, numbers and selection boxes. If a data column has
-type "select", a list of possible values must be provided. A sample data column dictionary is shown below: 
+type "select", a list of possible values must be provided. Columns marked as "text" or "select"
+will have its value surrounded by quotes in the boolean statement generated. 
+A sample data column dictionary is shown below: 
 ```
 var colDict={
 name: {type: "text"},
@@ -33,7 +35,7 @@ var queryTreeBuilder = new QueryTreeBuilder("tree", colDict);
 ```
 ###Properties and methods of the QueryTreeBuilder object
 * QueryTreeBuilder.buildIfStatement()
-  * Build a boolean expression representing the query criteria tree
+  * Builds a boolean expression representing the query criteria tree
   * Returns the boolean expression as a string
   * Takes one optional parameter: skipRebuildQueryObj - 
 when set to true, will build a boolean expression directly from QueryTreeBuilder.queryObj without rebuilding it from the query criteria tree first
@@ -41,12 +43,13 @@ when set to true, will build a boolean expression directly from QueryTreeBuilder
   * An object representation of the query criteria tree
   * Updated only after QueryTreeBuilder.buildQueryObjectFromDOM() is called, not every time the tree changes
 * QueryTreeBuilder.buildQueryObjectFromDOM()
-  * Build / rebuild QueryTreeBuilder.queryObj according to the current query criteria tree
-  * Returns the same QueryObj
+  * Builds / rebuilds QueryTreeBuilder.queryObj according to the current query criteria tree
+  * Returns updated QueryTreeBuilder.queryObj
 * QueryTreeBuilder.buildQueryTreeFromQueryObj()
   * Clears the current query criteria tree, then rebuild it using the QueryObj given
   * Takes one parameter: QueryObj - could be either the object itself or its JSON representation
-
+* QueryTreeBuilder.resetTree()
+  * Removes all nodes from the tree
 
 ##Technical notes
 * If the query criteria tree contains empty criteria groups, the QueryTreeBuilder will process it 
@@ -65,4 +68,7 @@ The one that ships with the program is shown below:
     select: {"equals":"=="}
 }
 ```
+* This program is unsupported in Internet Explorer due to its incomplete support of 
+HTML5 Drag and Drop API. Specifically, it doesn't support dragging any element other than
+`<a>`. 
 
