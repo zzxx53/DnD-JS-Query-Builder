@@ -147,6 +147,7 @@ QueryTreeBuilder.prototype = {
     buildQueryObjectFromDOM: function() {
         this.queryObj = new this.CriteriaGroupObject();
         this.buildQueryObjectFromDOMNode($('#root'), this.queryObj);
+        this.queryObj=this.queryObj.nestedElem[0];
         return this.queryObj;
     },
     buildQueryObjectFromDOMNode: function(DOMNode, objectNode) {
@@ -173,8 +174,10 @@ QueryTreeBuilder.prototype = {
             objectNode.nestedElem.push(cgo);
         }
     },
-    buildIfStatementFromDOM: function() {
-        this.buildQueryObjectFromDOM();
+    buildIfStatement: function(skipRebuildQueryObj) {
+        if (!skipRebuildQueryObj){
+            this.buildQueryObjectFromDOM();
+        }
         var s="";
         s=this.buildIfStatementFromQueryObjNode(this.queryObj,s);
         return s;
@@ -200,7 +203,7 @@ QueryTreeBuilder.prototype = {
             for (var i=0;i<node.nestedElem.length;i++){
                 s2+=this.buildIfStatementFromQueryObjNode(node.nestedElem[i],'');
             }
-            s1='('+s2+') ';
+            s1='('+s2+')';
         }
         if (node.negated){
             s1='(!'+s1+')';
@@ -214,13 +217,22 @@ QueryTreeBuilder.prototype = {
     buildQueryTreeFromQueryObj:function(str){
         var queryObj=JSON.parse(str);
         this.resetTree();
-        this.buildQueryTreeFromQueryObjNode(queryObj,$('#root'));
+        var newRoot=$('<li><ul></ul></li>');
+        this.buildQueryTreeFromQueryObjNode(queryObj,newRoot);
+        $('#root').children('ul').remove();
+        $('#root').append(newRoot.children('ul').children('li').children('ul'));
+        this.queryObj=queryObj;
+                
     },
     buildQueryTreeFromQueryObjNode:function(objectNode,DOMNode){
         if (objectNode.type==="criteria"){
-            this.buildCriteriaRow(DOMNode,undefined,objectNode);
+            this.buildCriteriaRow(DOMNode.children('ul'),undefined,objectNode);
         } else if (objectNode.type==="group"){
-            this.buildGroupRow(DOMNode,undefined,objectNode);
+            this.buildGroupRow(DOMNode.children('ul'),undefined,objectNode);
+            var insertedRow=DOMNode.children('ul').children('li.group,li.criteria').last();
+            for (var i=0;i<objectNode.nestedElem.length;i++){
+                this.buildQueryTreeFromQueryObjNode(objectNode.nestedElem[i],insertedRow);
+            }
         }
     },
     setDragDropEvents: function() {

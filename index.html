@@ -12,13 +12,13 @@
                     sex: {type: "select", values: ["male", "female"]}, };
                 qtb = new QueryTreeBuilder("tree", fieldsDict);
                 $('#getOutput').click(function(){
-                    var stmt=qtb.buildIfStatementFromDOM();
-                    console.log(stmt)
+                    var stmt=qtb.buildIfStatement();
                     $('#queryOutput').val(JSON.stringify(qtb.queryObj));
                     $('#stmtOutput').val(stmt);
                 });
                 $('#rebuild').click(function(){
                     qtb.buildQueryTreeFromQueryObj($('#queryOutput').val());
+                    $('#stmtOutput').val(qtb.buildIfStatement(true));
                 });
                 $('#reset').click(function(){
                     qtb.resetTree();
