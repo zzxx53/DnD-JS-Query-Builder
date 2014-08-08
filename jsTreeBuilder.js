@@ -275,7 +275,7 @@ QueryTreeBuilder.prototype = {
             event.preventDefault();
             var $eventTarget = $(event.target);
             $('.dndjqb_droppable').removeClass('dndjqb_highlighted');
-            if (self.objOnDrag === null || $eventTarget === self.objOnDrag) {
+            if (self.objOnDrag === null || $.contains(self.objOnDrag[0],$eventTarget[0]) || $eventTarget[0] === self.objOnDrag[0] ) {
                 self.objOnDrag = null;
                 return false;
             }
