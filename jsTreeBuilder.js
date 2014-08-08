@@ -1,6 +1,20 @@
+/*
+ * Copyright (c) 2014 zzxx53@GitHub
+ * Some rights reserved 
+ * Released under MIT license
+ * See https://github.com/zzxx53/Draggble-JS-Query-Builder for documentation and updates 
+ */
+
 function QueryTreeBuilder(containerID, fieldsDict) {
-    this.rootID = containerID;
-    $('#' + containerID).html('<ul class="tree"><li id="root" class="group droppable">Root&emsp;&emsp;<button class="add">Add Node</button><button class="addGroup">Add Group</button><ul></ul></li></ul>');
+    var root;
+    if (typeof containerID === "string"){
+        this.rootID = containerID;
+        root=$('#' + containerID);
+    } else {
+        this.rootID=containerID.attr('id');
+        root=containerID;
+    }
+    root.html('<ul class="tree"><li id="dndjqb_root" class="dndjqb_group dndjqb_droppable">Root&emsp;&emsp;<button class="dndjqb_add">Add Node</button><button class="dndjqb_addGroup">Add Group</button><ul></ul></li></ul>');
     this.fields = fieldsDict;
     this.setButtonEvents();
 }
@@ -13,13 +27,13 @@ QueryTreeBuilder.prototype = {
         numeric: {"equals":"==", "gt":">", "lt":"<", "ge":">=", "le":"<="},
         select: {"equals":"=="}
     },
-    buttonString: '<button class="add">Add Node</button><button class="addGroup">Add Group</button><button class="remove">Remove Node</button>',
-    andOrDropdownString: '<li class="AndOr"><select><option>AND</option><option>OR</option></select></li>',
-    negatedCheckboxString: 'Negated? <span class="negation"><input type="checkbox" class="neg"></span>',
+    buttonString: '<button class="dndjqb_add">Add Node</button><button class="dndjqb_addGroup">Add Group</button><button class="dndjqb_remove">Remove Node</button>',
+    andOrDropdownString: '<li class="dndjqb_AndOr"><select><option>AND</option><option>OR</option></select></li>',
+    negatedCheckboxString: 'Negated? <span class="dndjqb_negation"><input type="checkbox" class="dndjqb_neg"></span>',
     objOnDrag: null,
     opsDropdown: {},
     buildOpsDropdown: function(type) {
-        this.opsDropdown[type] = '<select class="opsDropdown">';
+        this.opsDropdown[type] = '<select class="dndjqb_opsDropdown">';
         var operators=Object.keys(this.ops[type]);
         for (var i = 0; i < operators.length; i++) {
             this.opsDropdown[type] += "<option>" + operators[i] + "</option>";
@@ -28,7 +42,7 @@ QueryTreeBuilder.prototype = {
     },
     selectDropdown: {},
     buildSelectDropdown: function(selectID) {
-        this.selectDropdown[selectID] = '<select class="value">';
+        this.selectDropdown[selectID] = '<select class="dndjqb_value">';
         for (var i = 0; i < this.fields[selectID].values.length; i++) {
             this.selectDropdown[selectID] += "<option>" + this.fields[selectID].values[i] + "</option>";
         }
@@ -36,7 +50,7 @@ QueryTreeBuilder.prototype = {
     },
     buildFieldDropdown: function(parentObj) {
         var fieldNames = Object.keys(this.fields);
-        var dropdownText = '<select class="FieldDropdown">';
+        var dropdownText = '<select class="dndjqb_FieldDropdown">';
         if (this.fieldDropdownString === "") {
             for (var i = 0; i < fieldNames.length; i++) {
                 this.fieldDropdownString += "<option>" + fieldNames[i] + "</option>";
@@ -52,44 +66,44 @@ QueryTreeBuilder.prototype = {
             if (!self.opsDropdown[self.fields[fieldName].type]) {
                 self.buildOpsDropdown(self.fields[fieldName].type);
             }
-            $(this).siblings("span.opsField").html(self.opsDropdown[self.fields[fieldName].type]);
+            $(this).siblings("span.dndjqb_opsField").html(self.opsDropdown[self.fields[fieldName].type]);
             if (self.fields[fieldName].type === "select") {
                 if (!self.selectDropdown[fieldName]) {
                     self.buildSelectDropdown(fieldName);
                 }
-                $(this).siblings("span.valueField").html(self.selectDropdown[fieldName]);
+                $(this).siblings("span.dndjqb_valueField").html(self.selectDropdown[fieldName]);
             } else {
-                $(this).siblings("span.valueField").html('<input class="value" />');
+                $(this).siblings("span.dndjqb_valueField").html('<input class="dndjqb_value" />');
             }
         });
     },
     buildCriteriaRow: function(parentObj, childIndex,rowData) {
-        var inserted = $('<li class="criteria draggable droppable" draggable="true">Criteria&emsp;&emsp;</li>');
+        var inserted = $('<li class="dndjqb_criteria dndjqb_draggable dndjqb_droppable" draggable="true">Criteria&emsp;&emsp;</li>');
         inserted.append(this.negatedCheckboxString + '&emsp;');
         if (childIndex === undefined) {
             parentObj.append(inserted);
         } else {
-            $(parentObj.children('li.criteria')[childIndex]).after(inserted);
+            $(parentObj.children('li.dndjqb_criteria')[childIndex]).after(inserted);
         }
         this.buildFieldDropdown(inserted);
-        inserted.append("<span class='opsField'></span><span class='valueField'></span>&emsp;");
+        inserted.append("<span class='dndjqb_opsField'></span><span class='dndjqb_valueField'></span>&emsp;");
         inserted.append(this.buttonString);
-        if (inserted.prev('li.criteria,li.group').length) {
+        if (inserted.prev('li.dndjqb_criteria,li.dndjqb_group').length) {
             this.buildAndOrRow(inserted);
         }
-        inserted.children('select.FieldDropdown').change();
+        inserted.children('select.dndjqb_FieldDropdown').change();
         this.setButtonEvents();
         this.setDragDropEvents();
         if (rowData!= undefined){
-            inserted.children('select.FieldDropdown').val(rowData.fieldName);
-            inserted.children('select.FieldDropdown').change();
-            inserted.children('span.opsField').children('select.opsDropdown').val(rowData.op);
-            inserted.children('span.valueField').children('.value').val(rowData.value);
+            inserted.children('select.dndjqb_FieldDropdown').val(rowData.fieldName);
+            inserted.children('select.dndjqb_FieldDropdown').change();
+            inserted.children('span.dndjqb_opsField').children('select.dndjqb_opsDropdown').val(rowData.op);
+            inserted.children('span.dndjqb_valueField').children('.dndjqb_value').val(rowData.value);
             if (rowData.negated){
-                inserted.children('span.negation').children('input.neg').prop('checked',true);
+                inserted.children('span.dndjqb_negation').children('input.dndjqb_neg').prop('checked',true);
             }
             if (rowData.connector !=null){
-                inserted.prev("li.AndOr").children('select').val(rowData.connector);
+                inserted.prev("li.dndjqb_AndOr").children('select').val(rowData.connector);
             }
         }
     },
@@ -97,80 +111,80 @@ QueryTreeBuilder.prototype = {
         criteriaRowObj.before(this.andOrDropdownString);
     },
     buildGroupRow: function(parentObj, childIndex,rowData) {
-        var inserted = $('<li class="group draggable droppable" draggable="true">Criteria Group&emsp;&emsp;' + this.negatedCheckboxString + '&emsp;' + this.buttonString + "<ul></ul></li>");
+        var inserted = $('<li class="dndjqb_group dndjqb_draggable dndjqb_droppable" draggable="true">Criteria Group&emsp;&emsp;' + this.negatedCheckboxString + '&emsp;' + this.buttonString + "<ul></ul></li>");
         if (childIndex === undefined) {
             parentObj.append(inserted);
         } else {
-            $(parentObj.children('li.criteria')[childIndex]).after(inserted);
+            $(parentObj.children('li.dndjqb_criteria')[childIndex]).after(inserted);
         }
-        if (inserted.prev('li.criteria,li.group').length) {
+        if (inserted.prev('li.dndjqb_criteria,li.dndjqb_group').length) {
             this.buildAndOrRow(inserted);
         }
         this.setButtonEvents();
         this.setDragDropEvents();
         if (rowData!= undefined){
             if (rowData.negated){
-                inserted.children('span.negation').children('input.neg').prop('checked',true);
+                inserted.children('span.dndjqb_negation').children('input.dndjqb_neg').prop('checked',true);
             }
             if (rowData.connector !=null){
-                inserted.prev("li.AndOr").children('select').val(rowData.connector);
+                inserted.prev("li.dndjqb_AndOr").children('select').val(rowData.connector);
             }
         }
     },
     setButtonEvents: function() {
         var self = this;
-        $(".add").off('click').click(function() {
-            if ($(this).closest('li').hasClass('criteria')) {
+        $(".dndjqb_add").off('click').click(function() {
+            if ($(this).closest('li').hasClass('dndjqb_criteria')) {
                 var thisLI = $(this).closest('li');
                 var parent = thisLI.parent('ul');
-                self.buildCriteriaRow(parent, parent.children('li.criteria').index(thisLI));
-            } else if ($(this).closest('li').hasClass('group')) {
+                self.buildCriteriaRow(parent, parent.children('li.dndjqb_criteria').index(thisLI));
+            } else if ($(this).closest('li').hasClass('dndjqb_group')) {
                 self.buildCriteriaRow($(this).siblings('ul'));
             }
         });
-        $(".addGroup").off('click').click(function() {
-            if ($(this).closest('li').hasClass('criteria')) {
+        $(".dndjqb_addGroup").off('click').click(function() {
+            if ($(this).closest('li').hasClass('dndjqb_criteria')) {
                 var thisLI = $(this).closest('li');
                 var parent = thisLI.parent('ul');
-                self.buildGroupRow(parent, parent.children('li.criteria').index(thisLI));
-            } else if ($(this).closest('li').hasClass('group')) {
+                self.buildGroupRow(parent, parent.children('li.dndjqb_criteria').index(thisLI));
+            } else if ($(this).closest('li').hasClass('dndjqb_group')) {
                 self.buildGroupRow($(this).siblings('ul'));
             }
         });
         $(".remove").off('click').click(function() {
             var thisLI = $(this).closest("li");
-            thisLI.prev("li.AndOr").remove();
+            thisLI.prev("li.dndjqb_AndOr").remove();
             thisLI.remove();
         });
 
     },
     buildQueryObjectFromDOM: function() {
         this.queryObj = new this.CriteriaGroupObject();
-        this.buildQueryObjectFromDOMNode($('#root'), this.queryObj);
+        this.buildQueryObjectFromDOMNode($('#dndjqb_root'), this.queryObj);
         this.queryObj=this.queryObj.nestedElem[0];
         return this.queryObj;
     },
     buildQueryObjectFromDOMNode: function(DOMNode, objectNode) {
-        if (DOMNode.hasClass('criteria')) {
-            var fieldName = DOMNode.children('select.FieldDropdown').val();
-            var op = DOMNode.children('span.opsField').children('select.opsDropdown').val();
-            var value = DOMNode.children('span.valueField').children('.value').val();
-            var connector = DOMNode.prev('li.AndOr').children('select').val();
+        if (DOMNode.hasClass('dndjqb_criteria')) {
+            var fieldName = DOMNode.children('select.dndjqb_FieldDropdown').val();
+            var op = DOMNode.children('span.dndjqb_opsField').children('select.dndjqb_opsDropdown').val();
+            var value = DOMNode.children('span.dndjqb_valueField').children('.dndjqb_value').val();
+            var connector = DOMNode.prev('li.dndjqb_AndOr').children('select').val();
             var co = new this.CriteriaObject(fieldName, op, value, connector);
-            if (DOMNode.children('span.negation').children('input.neg').is(':checked')) {
+            if (DOMNode.children('span.dndjqb_negation').children('input.dndjqb_neg').is(':checked')) {
                 co.negated = true;
             }
             objectNode.nestedElem.push(co);
-        } else if (DOMNode.hasClass('group')) {
+        } else if (DOMNode.hasClass('dndjqb_group')) {
             var cgo = new this.CriteriaGroupObject();
-            var childrenCriteria = DOMNode.children('ul').children('li.criteria,li.group');
+            var childrenCriteria = DOMNode.children('ul').children('li.dndjqb_criteria,li.dndjqb_group');
             for (var i = 0; i < childrenCriteria.length; i++) {
                 this.buildQueryObjectFromDOMNode($(childrenCriteria[i]), cgo);
             }
-            if (DOMNode.children('span.negation').children('input.neg').is(':checked')) {
+            if (DOMNode.children('span.dndjqb_negation').children('input.dndjqb_neg').is(':checked')) {
                 cgo.negated = true;
             }
-            cgo.connector = DOMNode.prev('li.AndOr').children('select').val();
+            cgo.connector = DOMNode.prev('li.dndjqb_AndOr').children('select').val();
             objectNode.nestedElem.push(cgo);
         }
     },
@@ -183,7 +197,6 @@ QueryTreeBuilder.prototype = {
         return s;
     },
     buildIfStatementFromQueryObjNode:function(node,s){
-        //console.log(s)
         var s1="";
         if (node.type==="criteria"){
             var type=this.fields[node.fieldName].type;
@@ -214,13 +227,21 @@ QueryTreeBuilder.prototype = {
         s+=s1;
         return s;
     },
-    buildQueryTreeFromQueryObj:function(str){
-        var queryObj=JSON.parse(str);
+    buildQueryTreeFromQueryObj:function(input){
+        var queryObj;
+        if (typeof input ==="string"){
+            queryObj=JSON.parse(input);
+        } else if (typeof input ==="object"){
+            queryObj=input;
+        } else {
+            console.log("Unable to set QueryObj");
+            return;
+        }
         this.resetTree();
         var newRoot=$('<li><ul></ul></li>');
         this.buildQueryTreeFromQueryObjNode(queryObj,newRoot);
-        $('#root').children('ul').remove();
-        $('#root').append(newRoot.children('ul').children('li').children('ul'));
+        $('#dndjqb_root').children('ul').remove();
+        $('#dndjqb_root').append(newRoot.children('ul').children('li').children('ul'));
         this.queryObj=queryObj;
                 
     },
@@ -229,7 +250,7 @@ QueryTreeBuilder.prototype = {
             this.buildCriteriaRow(DOMNode.children('ul'),undefined,objectNode);
         } else if (objectNode.type==="group"){
             this.buildGroupRow(DOMNode.children('ul'),undefined,objectNode);
-            var insertedRow=DOMNode.children('ul').children('li.group,li.criteria').last();
+            var insertedRow=DOMNode.children('ul').children('li.dndjqb_group,li.dndjqb_criteria').last();
             for (var i=0;i<objectNode.nestedElem.length;i++){
                 this.buildQueryTreeFromQueryObjNode(objectNode.nestedElem[i],insertedRow);
             }
@@ -237,7 +258,7 @@ QueryTreeBuilder.prototype = {
     },
     setDragDropEvents: function() {
         var self = this;
-        $('.draggable').off('dragstart').on('dragstart', function(event) {
+        $('.dndjqb_draggable').off('dragstart').on('dragstart', function(event) {
             self.objOnDrag = $(event.target);
             event.originalEvent.dataTransfer.setData("text/html", event.target);
             //an object can't be dropped on itself
@@ -245,29 +266,28 @@ QueryTreeBuilder.prototype = {
                 return false;
             });
         });
-        $('.droppable').off('drop').on('drop', function(event) {
+        $('.dndjqb_droppable').off('drop').on('drop', function(event) {
             //drop event always fired twice? 
-            console.log('drop event fired');
             event.preventDefault();
             var $eventTarget = $(event.target);
-            $('.droppable').removeClass('highlighted');
+            $('.dndjqb_droppable').removeClass('dndjqb_highlighted');
             if (self.objOnDrag === null || $eventTarget === self.objOnDrag) {
                 self.objOnDrag = null;
                 return false;
             }
-            var sourceAndOrDropdown = self.objOnDrag.prev('li.AndOr');
+            var sourceAndOrDropdown = self.objOnDrag.prev('li.dndjqb_AndOr');
             if (self.objOnDrag.parent('ul').children('li').index(self.objOnDrag) === 0) {
-                self.objOnDrag.next('li.AndOr').remove();
+                self.objOnDrag.next('li.dndjqb_AndOr').remove();
             }
-            if ($eventTarget.hasClass('criteria')) {
+            if ($eventTarget.hasClass('dndjqb_criteria')) {
                 $eventTarget.after(self.objOnDrag);
                 if (sourceAndOrDropdown.length) {
                     self.objOnDrag.before(sourceAndOrDropdown);
                 } else {
                     self.buildAndOrRow(self.objOnDrag);
                 }
-            } else if ($eventTarget.hasClass('group')) {
-                var originalChildrenCount = $eventTarget.children('ul').children('li.criteria,li.group').length;
+            } else if ($eventTarget.hasClass('dndjqb_group')) {
+                var originalChildrenCount = $eventTarget.children('ul').children('li.dndjqb_criteria,li.dndjqb_group').length;
                 $eventTarget.children('ul').append(self.objOnDrag);
                 if (originalChildrenCount > 0) {
                     if (sourceAndOrDropdown.length > 0) {
@@ -283,14 +303,14 @@ QueryTreeBuilder.prototype = {
             }
             self.objOnDrag = null;
         });
-        $('.droppable').off('dragover').on('dragover', function(event) {
+        $('.dndjqb_droppable').off('dragover').on('dragover', function(event) {
             event.preventDefault();
-            if ($(event.target).hasClass('criteria') || $(event.target).hasClass('group'))
-                $(event.target).addClass('highlighted');
+            if ($(event.target).hasClass('dndjqb_criteria') || $(event.target).hasClass('dndjqb_group'))
+                $(event.target).addClass('dndjqb_highlighted');
         });
-        $('.droppable').off('dragleave').on('dragleave', function(event) {
+        $('.dndjqb_droppable').off('dragleave').on('dragleave', function(event) {
             event.preventDefault();
-            $(event.target).removeClass('highlighted');
+            $(event.target).removeClass('dndjqb_highlighted');
         });
     },
     CriteriaObject: function(fieldName, op, value, connector) {
@@ -308,7 +328,7 @@ QueryTreeBuilder.prototype = {
         this.negated = false;
     },
     resetTree:function(){
-        $('#root').children('ul').empty();
+        $('#dndjqb_root').children('ul').empty();
     }
 };
 
