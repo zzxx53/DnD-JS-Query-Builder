@@ -153,7 +153,11 @@ QueryTreeBuilder.prototype = {
         });
         $(".dndjqb_remove").off('click').click(function() {
             var thisLI = $(this).closest("li");
+            var parent = thisLI.parent('ul');
             thisLI.prev("li.dndjqb_AndOr").remove();
+            if (parent.children('li.dndjqb_criteria,li.dndjqb_group').index(thisLI)===0){
+                thisLI.next("li.dndjqb_AndOr").remove();
+            }
             thisLI.remove();
         });
 
@@ -319,7 +323,7 @@ QueryTreeBuilder.prototype = {
         this.fieldName = fieldName;
         this.op = op;
         this.value = value;
-        this.connector = connector; //AndOr values from the li.AndOr before it
+        this.connector = connector; //AndOr values from the li.dndjqb_AndOr before it
     },
     CriteriaGroupObject: function() {
         this.type='group';
