@@ -1,4 +1,4 @@
-Draggable JS Query Builder
+Drag-and-Drop JS Query Builder
 ==============
 This is a proof-of-concept attempt at a JavaScript if-statement tree builder **with drag-and-drop support**. 
 There has been various libraries that allows for a visual approach for building complex 
