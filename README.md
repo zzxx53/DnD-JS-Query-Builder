@@ -58,7 +58,6 @@ It may be directly swapped out for a more desired one after initialization: `que
 Note that the first level keys are the data type names; the second level keys are the operators' 
 display name on the page; the values are what's used in the boolean statements. 
 The one that ships with the program is shown below: 
-
 ```
 {
     text: {"equals":"==", "begins with":"%=", "ends with":"=%", "contains":"%=%"},
